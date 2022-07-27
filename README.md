@@ -2,9 +2,9 @@
 
 As a relatively new Linux user, I often "accidentally" mess up my installation and have to reinstall everything.
 
-![](https://depositphotos.com/stock-photos/sad-cat.html)
-
 These Ansible scripts were written with that in mind, and is aimed to ensure that I can restart easily.
+
+This repo would not exist without the help of similar repos such as [this](https://github.com/kevinjelnl/setup-pop_os).
 
 ## Usage
 
