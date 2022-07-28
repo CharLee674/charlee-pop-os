@@ -1,0 +1,162 @@
+---
+- hosts: localhost
+  connection: local
+  become: true
+  ignore_unreachable: yes
+  vars:
+    local_user: "{{ ansible_user_id }}"
+    ros_user:
+        name: clee
+        group: clee
+    ros_configuration: desktop-full
+    ros_packages:
+      - rosbridge-server
+  roles:
+    # - rarrais.ros
+    - gantsign.visual-studio-code
+    - manala.roles.ngrok
+    # - manala.roles.grafana
+    # - manala.roles.prometheus
+    # - manala.roles.mongodb
+  collections:
+    - manala.roles
+  # Install relevant apt packages
+  tasks:
+    - name: Install aptitude
+      apt:
+        name: aptitude
+        state: latest
+
+    # Dev stuff
+    - name: Install required system packages
+      apt:
+        pkg:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+          - python3-pip
+          - virtualenv
+          - python3-setuptools
+
+    - name: Add Docker GPG apt Key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker Repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu focal stable
+        state: present
+
+    - name: Update apt and install docker
+      apt:
+        pkg:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose-plugin
+
+    - name: Install Docker Module for Python
+      pip:
+        name: docker
+
+    - name: Ensure group "docker" exists
+      become: yes
+      group:
+        name: docker
+        state: present
+
+    - name: Set user settings
+      become: yes
+      user:
+         name: "{{ local_user }}"
+         shell: /usr/bin/zsh
+         groups: docker
+         append: yes
+         generate_ssh_key: yes
+
+    - name: Install apt packages
+      become: yes
+      apt:
+        pkg:
+        - snapd
+        - npm
+        - tmux
+        - htop
+        - vim
+        - git
+        - thefuck
+        - docker
+
+    - name: Remove dependencies that are no longer required
+      become: yes
+      apt:
+        autoremove: yes
+
+    - name: Check that gazebo is installed
+      stat:
+        path: /usr/bin/gazebo
+      register: stat_result
+
+    - name: install gazebo
+      ansible.builtin.shell: curl -sSL http://get.gazebosim.org | sh
+      when: not stat_result.stat.exists
+
+    - name: Install nvm
+      shell: >
+        curl https://raw.githubusercontent.com/creationix/nvm/v0.7.0/install.sh | sh
+        creates=/home/{{ ansible_user_id }}/.nvm/nvm.sh
+
+    - block:
+      - name: install flatpaks for development
+        community.general.flatpak:
+            name:
+              - com.bitwarden.desktop
+              - md.obsidian.Obsidian
+              - org.gnome.DejaDup
+              - rest.insomnia.Insomnia
+              - io.github.diegoivanme.flowtime
+              - cc.arduino.arduinoide
+              - com.getpostman.Postman
+              - com.st.STM32CubeIDE
+              - com.unity.UnityHub
+              - in.srev.guiscrcpy
+              - io.github.shiftey.Desktop
+              - com.google.AndroidStudio
+
+      # Eng stuff
+      - name: install flatpaks for engineering stuff
+        community.general.flatpak:
+           name:
+             - com.flashforge.FlashPrint
+             - org.freecadweb.FreeCAD
+             - org.kicad.KiCad
+             - org.octave.Octave
+             - com.ultimaker.cura
+             - org.cvfosammmm.Setzer
+             - org.geogebra.GeoGebra
+
+      # Artsy stuff
+      - name: install flatpaks for hobbies
+        community.general.flatpak:
+            name:
+              - com.bitwig.BitwigStudio
+              - org.blender.Blender
+              - org.darktable.Darktable
+              - org.gimp.GIMP
+              - com.icons8.Lunacy
+              - com.rawtherapee.RawTherapee
+
+      # Life stuff
+      - name: install flatpaks for general usage
+        community.general.flatpak:
+            name:
+              - com.discordapp.Discord
+              - com.spotify.Client
+              - com.valvesoftware.Steam
+              - org.videolan.VLC
+              - us.zoom.Zoom
+              - com.obsproject.Studio
+
+      ignore_errors: yes
