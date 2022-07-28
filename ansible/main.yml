@@ -153,6 +153,7 @@
         community.general.flatpak:
             name:
               - com.discordapp.Discord
+              - com.slack.Slack
               - com.spotify.Client
               - com.valvesoftware.Steam
               - org.videolan.VLC
